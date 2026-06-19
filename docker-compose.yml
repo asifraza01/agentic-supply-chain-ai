@@ -1,0 +1,45 @@
+
+services:
+  # 1. Zookeeper (Required by Kafka for cluster management)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - supply-chain-net
+
+  # 2. Apache Kafka (The real-time event stream)
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - supply-chain-net
+
+  # 3. Qdrant (The Vector Database for RAG)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"  # REST API
+      - "6334:6334"  # gRPC API
+    volumes:
+      - ./data/qdrant_storage:/qdrant/storage:z  # Persists data locally
+    networks:
+      - supply-chain-net
+
+networks:
+  supply-chain-net:
+    driver: bridge
