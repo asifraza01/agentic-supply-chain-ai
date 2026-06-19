@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 
 export default function Home() {
   return (
@@ -15,7 +14,7 @@ export default function Home() {
             Agentic AI Orchestrator with Human-in-the-Loop Governance
           </p>
         </div>
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1">
           🟢 System Operational
         </Badge>
       </header>
