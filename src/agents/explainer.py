@@ -42,7 +42,7 @@ def explainer_node(state: SupplyChainState) -> Dict[str, Any]:
         # Build the prompt
         prompt = f"""You are a senior supply chain AI assistant. Generate a clear, professional proposal for a human supply chain manager.
 
-CONTEXT:
+        CONTEXT:
 - Store ID: {state['store_id']}
 - Product: {inventory['product_name']} (SKU: {state['sku']})
 
