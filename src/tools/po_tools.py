@@ -60,7 +60,7 @@ def create_purchase_order(
             created_at=datetime.utcnow()
         )
         
-        print("   → Adding to database session...")
+        print("   → Adding toschema database session...")
         session.add(new_po)
         
         print("   → Committing to database...")

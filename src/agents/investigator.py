@@ -43,7 +43,7 @@ def investigator_node(state: SupplyChainState) -> Dict[str, Any]:
         rag_query = f"Lead time, minimum order quantity (MOQ), penalties for late delivery, and safety stock requirements for {state['sku']}"
         
         contract_context = search_supplier_contracts(rag_query)
-        print(f"   ✓ Retrieved {len(contract_context)} characters of contract context.")
+        print(f"   ✓ Retrieved {len(contract_context)} characters of contracinventory_datat context.")
         
         return {
             "inventory_data": inventory_data,
