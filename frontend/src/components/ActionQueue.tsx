@@ -12,11 +12,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 
 import { ReviewModal } from "./ReviewModal"
-
-//import { chatWindow } from "./ChatWindow"
-
 
 export interface ActionItem {
   thread_id: string;
@@ -28,17 +27,23 @@ export interface ActionItem {
   proposal: string;
   contract_context: string;
   confidence: number;
-  //chat_message:string;
 }
 
-
- 
-//export function ActionQueue({ actions, setActions }: { actions: ActionItem[], setActions: any }) 
-export function ActionQueue({ actions, setActions }: { actions: ActionItem[], setActions: React.Dispatch<React.SetStateAction<ActionItem[]>> }) {
- 
-  //const [actions, setActions] = useState<ActionItem[]>([]);
+export function ActionQueue({ 
+  actions, 
+  setActions 
+}: { 
+  actions: ActionItem[], 
+  setActions: React.Dispatch<React.SetStateAction<ActionItem[]>> 
+}) {
   const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // ✅ NEW: States for rejection flow
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [itemToReject, setItemToReject] = useState<ActionItem | null>(null);
 
   // 🚨 POLLING: Use 127.0.0.1 to prevent Ubuntu IPv6 NetworkErrors
   useEffect(() => {
@@ -57,37 +62,71 @@ export function ActionQueue({ actions, setActions }: { actions: ActionItem[], se
     fetchActions(); 
     const interval = setInterval(fetchActions, 3000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [setActions]); // Added setActions to dependency array for safety
 
   const handleApprove = async (thread_id: string) => {
     if (!thread_id) return;
+    setIsProcessing(true);
     try {
-      await fetch("http://127.0.0.1:8001/api/approve-action", {
+      const response = await fetch("http://127.0.0.1:8001/api/approve-action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ thread_id, action: "approve" }),
       });
-      setIsModalOpen(false);
+      
+      if (response.ok) {
+        // ✅ Optimistically update UI: remove the approved item instantly
+        setActions(prev => prev.filter(item => item.thread_id !== thread_id));
+        setIsModalOpen(false);
+      }
     } catch (error) {
       console.error("Failed to approve:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleReject = async (thread_id: string) => {
-    if (!thread_id) return;
+  // ✅ NEW: Open the rejection dialog instead of immediately rejecting
+  const openRejectDialog = (thread_id: string) => {
+    const item = actions.find(a => a.thread_id === thread_id) || selectedItem;
+    if (item) {
+      setItemToReject(item);
+      setRejectionReason("");
+      setIsModalOpen(false); // Close review modal if it's currently open
+      setIsRejectModalOpen(true);
+    }
+  };
+
+  // ✅ NEW: Confirm rejection with reason
+  const confirmReject = async () => {
+    if (!itemToReject) return;
+    setIsProcessing(true);
     try {
-      await fetch("http://127.0.0.1:8001/api/approve-action", {
+      const response = await fetch("http://127.0.0.1:8001/api/approve-action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thread_id, action: "reject" }),
+        body: JSON.stringify({ 
+          thread_id: itemToReject.thread_id, 
+          action: "reject",
+          reason: rejectionReason.trim() || "No reason provided" // ✅ Send the reason to backend
+        }),
       });
-      setIsModalOpen(false);
+      
+      if (response.ok) {
+        // ✅ Optimistically update UI: remove the rejected item instantly
+        setActions(prev => prev.filter(item => item.thread_id !== itemToReject.thread_id));
+        setIsRejectModalOpen(false);
+        setItemToReject(null);
+        setRejectionReason("");
+      } else {
+        console.error("Failed to reject:", await response.text());
+      }
     } catch (error) {
       console.error("Failed to reject:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
-
-  
 
   return (
     <>
@@ -135,14 +174,16 @@ export function ActionQueue({ actions, setActions }: { actions: ActionItem[], se
                       <Button 
                         size="sm"
                         onClick={() => handleApprove(item.thread_id)}
+                        disabled={isProcessing}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        Approve
+                        {isProcessing ? "..." : "Approve"}
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleReject(item.thread_id)}
+                        onClick={() => openRejectDialog(item.thread_id)}
+                        disabled={isProcessing}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                       >
                         Reject
@@ -163,13 +204,54 @@ export function ActionQueue({ actions, setActions }: { actions: ActionItem[], se
         </CardContent>
       </Card>
 
+      {/* Review Modal (3-column Glass Box) */}
       <ReviewModal 
-      item={selectedItem} 
-      isOpen={isModalOpen} 
-      onClose={() => setIsModalOpen(false)}
-      onApprove={(id) => handleApprove(id)}
-      onReject={(id) => handleReject(id)}
+        item={selectedItem} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        onApprove={(id) => handleApprove(id)}
+        onReject={(id) => openRejectDialog(id)} // ✅ Redirects to the new rejection dialog
       />
+
+      {/* ✅ NEW: Rejection Reason Dialog */}
+      <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Purchase Order</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Please provide a reason for rejecting this recommendation. This will be saved in the audit trail.
+            </p>
+            <Textarea
+              placeholder="e.g., Overstock concern, budget constraints, wrong supplier, seasonal item..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsRejectModalOpen(false);
+                setItemToReject(null);
+                setRejectionReason("");
+              }}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmReject}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Confirm Rejection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
