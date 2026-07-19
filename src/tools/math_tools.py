@@ -46,7 +46,8 @@ def calculate_reorder_quantity(
     total_needed = stock_during_lead_time + safety_stock
     
     # Order quantity (never negative)
-    recommended_order = max(0, total_needed - calc_input.current_stock)
+    # Ensure at least a minimum order quantity of 5 units, changed from 0 to 5 to avoid very small orders or zero orders.
+    recommended_order = max(5, total_needed - calc_input.current_stock)
     
     # Round up to nearest batch size (e.g., boxes of 10)
     batch_size = 10

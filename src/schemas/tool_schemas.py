@@ -77,6 +77,7 @@ class PurchaseOrderCreate(BaseModel):
     """Input schema for creating a purchase order."""
     store_id: int = Field(..., description="The store ID")
     sku: str = Field(..., description="The product SKU")
+    POUIstatus: str = Field(..., description="The status of the purchase order from UI (e.g., 'APPROVED', 'REJECTED')")
     quantity: int = Field(..., gt=0, description="Quantity to order")
     approved_by: str = Field(default="AI Agent", description="Who approved this order")
 
@@ -106,3 +107,8 @@ class AgentDecision(BaseModel):
     reasoning: str
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score 0-1")
     requires_approval: bool = True
+
+    ###
+    # Dashbaord
+    ###
+    # --- Database Schema Setup ---

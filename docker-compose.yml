@@ -11,11 +11,16 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - supply-chain-net
+    restart: unless-stopped  # ← Add this
+
+
+
 
   # 2. Apache Kafka (The real-time event stream)
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
+    restart: unless-stopped  # ← Add this
     depends_on:
       - zookeeper
     ports:

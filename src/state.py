@@ -18,6 +18,8 @@ class SupplyChainState(TypedDict):
     store_id: int
     sku: str
     
+    
+    
     # Data gathered by Investigator Agent
     inventory_data: Optional[Dict[str, Any]]
     sales_velocity_data: Optional[Dict[str, Any]]
@@ -33,8 +35,22 @@ class SupplyChainState(TypedDict):
     human_approved: Optional[bool]
     human_feedback: Optional[str]
     
+    POstatusfromUI: Optional[str]
+    
     # Execution result
     purchase_order: Optional[Dict[str, Any]]
     
     # Error tracking
     error: Optional[str]
+    
+    # added for PO history save
+    
+    thread_id: Optional[str]
+    contract_context: Optional[str]  # ← RAG context from Investigator
+    final_ai_reply: Optional[str]  # ← Full proposal text
+    rejection_reason: Optional[str]  # ← NEW: Why rejected?
+    decision_recorded: Optional[bool]  # ← NEW: Audit trail flag
+
+
+
+

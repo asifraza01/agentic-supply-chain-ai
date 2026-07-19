@@ -93,6 +93,7 @@ def run_agent(store_id: int, sku: str, alert: str):
         "human_approved": None,
         "human_feedback": None,
         "purchase_order": None,
+        "thread_id": None,
         "error": None
     }
     
@@ -125,10 +126,16 @@ def run_agent(store_id: int, sku: str, alert: str):
 if __name__ == "__main__":
     # Default: Test with our problem scenario
     # Store 4, SKU-100 (Organic Milk) - critically low stock
+   ##########keep#################################
     store_id = 4
     sku = "SKU-100"
     alert = f"Store #{store_id} is reporting critically low stock on {sku} (Organic Milk). Investigate and propose a solution."
-    
+    ##########keep#################################3
+    #update_state(config, {"human_approved": True, "human_feedback": "Approved via UI"})
+    # app_graph = build_graph()
+    # config = {"configurable": {"human_approved": True, "human_feedback": "Approved via UI"}}
+
+##########keep#################################3
     # Allow command line arguments for testing other scenarios
     if len(sys.argv) >= 3:
         store_id = int(sys.argv[1])
@@ -136,3 +143,4 @@ if __name__ == "__main__":
         alert = f"Store #{store_id} needs inventory review for {sku}."
     
     run_agent(store_id, sku, alert)
+    ##########keep#################################3
